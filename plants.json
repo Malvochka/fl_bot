@@ -1,0 +1,26 @@
+[
+  {
+    "id": 0,
+    "name": "Кактус",
+    "interval": 5,
+    "start_date": "2025-05-08"
+  },
+  {
+    "id": 1,
+    "name": "Фикус",
+    "interval": 4,
+    "start_date": "2025-05-09"
+  },
+  {
+    "id": 2,
+    "name": "Бингус",
+    "interval": 3,
+    "start_date": "2025-05-07"
+  },
+  {
+    "id": 3,
+    "name": "Роза",
+    "interval": 2,
+    "start_date": "2025-05-09"
+  }
+]
