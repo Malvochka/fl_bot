@@ -56,7 +56,7 @@ async def plant_interval(message: Message, state: FSMContext):
         interval = int(message.text)
         await state.update_data(interval=interval)
         await state.set_state(PlantForm.start_date)
-        await message.answer("Дата начала полива? (ГГГГ-ММ-ДД)")
+        await message.answer("Дата начала полива? ("сегодня или ГГГГ-ММ-ДД")
     except:
         await message.answer("Введите число дней, например: 3")
 
