@@ -66,7 +66,9 @@ async def plant_start_date(message: Message, state: FSMContext):
     try:
         user_input = message.text.strip()
         if user_input == "" or user_input.lower() in ["сегодня", "now"]:
-            start_date = datetime.now().date()
+            from zoneinfo import ZoneInfo
+            start_date = datetime.now(ZoneInfo("Europe/Moscow")).date()
+
         else:
             start_date = datetime.strptime(user_input, "%Y-%m-%d").date()
 
