@@ -63,14 +63,19 @@ async def plant_interval(message: Message, state: FSMContext):
 @router.message(PlantForm.start_date)
 async def plant_start_date(message: Message, state: FSMContext):
     try:
-        start_date = datetime.strptime(message.text, "%Y-%m-%d").date()
-        data = await state.get_data()
-        add_plant(data['name'], data['interval'], start_date)
-        await message.answer("Растение добавлено!", reply_markup=main_menu)
-        await state.clear()
-    except:
-        await message.answer("Введите дату в формате: 2025-05-01")
+        user_input = message.text.strip()
+        if user_input == "" or user_input.lower() in ["сегодня", "now"]:
+            start_date = datetime.now().date()
+        else:
+            start_date = datetime.strptime(user_input, "%Y-%m-%d").date()
 
+        data = await state.get_data()
+        add_plant(message.chat.id, data['name'], data['interval'], start_date)
+        await message.answer("Растение добавлено! Напоминания начнутся с " + start_date.strftime("%Y-%m-%d"), reply_markup=main_menu)
+        await state.clear()
+    except Exception as e:
+        await message.answer("Введите дату в формате: 2025-05-01 или просто отправьте пустое сообщение.")
+        print(f"Ошибка разбора даты: {e}")
 @router.message(F.text == "✏ Изменить график полива")
 async def edit_menu(message: Message):
     plants = list_plants()
@@ -111,22 +116,21 @@ async def new_interval(message: Message, state: FSMContext):
         await message.answer("Введите корректное число.")
 
 @router.message(PlantForm.start_date)
-async def new_start_date(message: Message, state: FSMContext):
+async def plant_start_date(message: Message, state: FSMContext):
     try:
-        start_date = datetime.strptime(message.text, "%Y-%m-%d").date()
+        user_input = message.text.strip()
+        if user_input == "" or user_input.lower() in ["сегодня", "now"]:
+            start_date = datetime.now().date()
+        else:
+            start_date = datetime.strptime(user_input, "%Y-%m-%d").date()
+
         data = await state.get_data()
-        update_plant(
-            plant_id=data['editing_id'],
-            name=data['name'],
-            interval=data['interval'],
-            start_date=start_date
-        )
-        await message.answer("Информация обновлена!", reply_markup=main_menu)
+        add_plant(message.chat.id, data['name'], data['interval'], start_date)
+        await message.answer("Растение добавлено! Напоминания начнутся с " + start_date.strftime("%Y-%m-%d"), reply_markup=main_menu)
         await state.clear()
-    except:
-        await message.answer("Неверный формат даты.")
-
-
+    except Exception as e:
+        await message.answer("Введите дату в формате: 2025-05-01 или просто отправьте пустое сообщение.")
+        print(f"Ошибка разбора даты: {e}")
 @router.message(F.text == "⬅ Назад")
 async def go_back(message: Message):
     await message.answer("Возвращаемся в главное меню.", reply_markup=main_menu)
