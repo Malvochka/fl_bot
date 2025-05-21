@@ -104,9 +104,10 @@ async def edit_plant_handler(callback: CallbackQuery, state: FSMContext):
     await state.update_data(editing_id=plant_id)
     await callback.message.answer("Введите новое название растения:")
     await callback.answer()
-
+    
 @router.message(F.text == "⬅ Назад")
-async def go_back(message: Message):
+async def cancel_and_back(message: Message, state: FSMContext):
+    await state.clear()
     await message.answer("Возвращаемся в главное меню.", reply_markup=main_menu)
 
 # временный комментарий
