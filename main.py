@@ -1,32 +1,46 @@
 import asyncio
-import os
+import logging
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
 from handlers import router
-from dotenv import load_dotenv
+from plant_storage import _load, get_today_plans
+from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from plant_storage import get_today_plans
+from apscheduler.triggers.cron import CronTrigger
+from datetime import datetime
+from zoneinfo import ZoneInfo
+import os
+from dotenv import load_dotenv
 
 load_dotenv()
-bot = Bot(token=os.getenv("BOT_TOKEN"))
-dp = Dispatcher()
+TOKEN = os.getenv("BOT_TOKEN")
+
+logging.basicConfig(level=logging.INFO)
+bot = Bot(token=TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(router)
 
-USER_CHAT_ID = int(os.getenv("USER_CHAT_ID", "0"))
+scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
-async def send_daily_reminder():
-    if USER_CHAT_ID == 0:
-        print("USER_CHAT_ID не задан.")
-        return
-    plants = get_today_plans()
-    if not plants:
-        await bot.send_message(USER_CHAT_ID, "Сегодня поливать ничего не нужно.")
-    else:
-        text = "\n".join(f"• {p['name']}" for p in plants)
-        await bot.send_message(USER_CHAT_ID, f"Напоминание!\nСегодня поливаем:\n{text}")
+def schedule_daily_reminders():
+    data = _load()
+    for chat_id, plants in data.items():
+        for plant in plants:
+            remind_time = plant.get("remind_time", "08:00")
+            hour, minute = map(int, remind_time.split(":"))
+            plant_name = plant["name"]
+
+            def make_task(cid, name):
+                async def task():
+                    today_plants = get_today_plans(cid)
+                    if any(p["name"] == name for p in today_plants):
+                        await bot.send_message(cid, f"🔔 Напоминание: пора поливать {name}")
+                return task
+
+            scheduler.add_job(make_task(int(chat_id), plant_name), CronTrigger(hour=hour, minute=minute))
 
 async def main():
-    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    scheduler.add_job(send_daily_reminder, trigger="cron", hour=8, minute=0)
+    schedule_daily_reminders()
     scheduler.start()
     await dp.start_polling(bot)
 
