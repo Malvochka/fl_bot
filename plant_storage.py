@@ -1,11 +1,10 @@
-
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
 DATA_FILE = Path("plants.json")
 if not DATA_FILE.exists():
-    DATA_FILE.write_text("{}", encoding="utf-8")  # Храним словарь {chat_id: [...]}
+    DATA_FILE.write_text("{}", encoding="utf-8")
 
 def _load():
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -15,7 +14,7 @@ def _save(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-def add_plant(chat_id, name, interval, start_date):
+def add_plant(chat_id, name, interval, start_date, remind_time="08:00"):
     data = _load()
     chat_key = str(chat_id)
     if chat_key not in data:
@@ -24,14 +23,15 @@ def add_plant(chat_id, name, interval, start_date):
         "id": len(data[chat_key]),
         "name": name,
         "interval": interval,
-        "start_date": start_date.isoformat()
+        "start_date": start_date.isoformat(),
+        "remind_time": remind_time
     })
     _save(data)
 
 def list_plants(chat_id):
     return _load().get(str(chat_id), [])
 
-def update_plant(chat_id, plant_id, name=None, interval=None, start_date=None):
+def update_plant(chat_id, plant_id, name=None, interval=None, start_date=None, remind_time=None):
     data = _load()
     plants = data.get(str(chat_id), [])
     for plant in plants:
@@ -39,6 +39,7 @@ def update_plant(chat_id, plant_id, name=None, interval=None, start_date=None):
             if name: plant["name"] = name
             if interval: plant["interval"] = interval
             if start_date: plant["start_date"] = start_date.isoformat()
+            if remind_time: plant["remind_time"] = remind_time
             break
     data[str(chat_id)] = plants
     _save(data)
