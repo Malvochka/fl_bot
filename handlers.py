@@ -1,4 +1,3 @@
-
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.fsm.context import FSMContext
@@ -88,8 +87,20 @@ async def remind_time(message: Message, state: FSMContext):
     await state.update_data(remind_time=remind_at)
 
     data = await state.get_data()
-    add_plant(message.chat.id, data['name'], data['interval'], data['start_date'], remind_at)
-    await message.answer(f"Растение добавлено! Напоминание будет приходить в {remind_at}", reply_markup=main_menu)
+    if 'editing_id' in data:
+        update_plant(
+            message.chat.id,
+            data['editing_id'],
+            data['name'],
+            data['interval'],
+            data['start_date'],
+            remind_at
+        )
+        await message.answer(f"Растение обновлено! Следующее напоминание будет в {remind_at}", reply_markup=main_menu)
+    else:
+        add_plant(message.chat.id, data['name'], data['interval'], data['start_date'], remind_at)
+        await message.answer(f"Растение добавлено! Напоминание будет приходить в {remind_at}", reply_markup=main_menu)
+
     await state.clear()
 
 @router.message(F.text == "✏ Изменить график полива")
@@ -103,7 +114,7 @@ async def edit_menu(message: Message):
 @router.callback_query(F.data.startswith("delete_"))
 async def delete_plant_handler(callback: CallbackQuery):
     plant_id = int(callback.data.split("_")[1])
-    delete_plant(plant_id)
+    delete_plant(callback.message.chat.id, plant_id)
     await callback.message.edit_text("Удалено.")
     await callback.answer()
 
